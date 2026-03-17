@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\AdviceRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AdviceRepository::class)]
@@ -18,6 +20,17 @@ class Advice
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $description = null;
+
+    /**
+     * @var Collection<int, MonthAdvice>
+     */
+    #[ORM\OneToMany(targetEntity: MonthAdvice::class, mappedBy: 'advice')]
+    private Collection $months;
+
+    public function __construct()
+    {
+        $this->months = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -44,6 +57,30 @@ class Advice
     public function setDescription(?string $description): static
     {
         $this->description = $description;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, MonthAdvice>
+     */
+    public function getMonths(): Collection
+    {
+        return $this->months;
+    }
+
+    public function addMonth(MonthAdvice $month): static
+    {
+        if (!$this->months->contains($month)) {
+            $this->months->add($month);
+        }
+
+        return $this;
+    }
+
+    public function removeMonth(MonthAdvice $month): static
+    {
+        $this->months->removeElement($month);
 
         return $this;
     }

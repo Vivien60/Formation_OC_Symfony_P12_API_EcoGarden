@@ -8,3 +8,5 @@
 /var/
 /vendor/
 ###< symfony/framework-bundle ###
+/src/Command/RegenerateAppSecretCommand.php
+/.env.dev

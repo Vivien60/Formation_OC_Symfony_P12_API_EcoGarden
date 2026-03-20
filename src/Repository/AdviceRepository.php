@@ -27,7 +27,7 @@ class AdviceRepository extends ServiceEntityRepository
                 ->andWhere('m.numberInYear = :val')
                 ->setParameter('val', $month->value)
                 ->orderBy('a.id', 'ASC')
-                ->setMaxResults(10)
+                ->setMaxResults(20)
                 ->getQuery()
                 ->getResult()
             ;

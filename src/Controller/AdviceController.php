@@ -3,10 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Advice;
-use App\Enum\Month;
 use App\Repository\AdviceRepository;
+use App\Service\AdviceMonthManager;
 use Doctrine\ORM\EntityManagerInterface;
-use JMS\Serializer\DeserializationContext;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -41,15 +40,16 @@ final class AdviceController extends AbstractController
     }
 
     #[Route('/advices/{id}', name: 'advices_update', methods: 'PUT')]
-    public function updateAdvice(Advice $currentAdvice, Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse
+    public function updateAdvice(Advice $currentAdvice, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AdviceMonthManager $monthManager): JsonResponse
     {
-        $requestContent = $request->getContent();
         $updatedAdvice = $serializer->deserialize(
-            $requestContent,
+            $request->getContent(),
             Advice::class,
             'json',
             [AbstractNormalizer::OBJECT_TO_POPULATE => $currentAdvice]
         );
+        $months = $request->toArray()['months'] ?? [];
+        $monthManager->syncMonths($updatedAdvice, $months, true);
         $em->persist($updatedAdvice);
         $em->flush();
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
@@ -64,14 +64,16 @@ final class AdviceController extends AbstractController
     }
 
     #[Route('/advices', name: 'advices_create', methods: 'POST')]
-    public function createAdvice(Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse
+    public function createAdvice(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AdviceMonthManager $monthManager): JsonResponse
     {
-        $requestContent = $request->getContent();
+        /** @var Advice $newAdvice */
         $newAdvice = $serializer->deserialize(
-            $requestContent,
+            $request->getContent(),
             Advice::class,
             'json'
         );
+        $months = $request->toArray()['months'] ?? [];
+        $monthManager->syncMonths($newAdvice, $months);
         $em->persist($newAdvice);
         $em->flush();
         return new JsonResponse(null, Response::HTTP_CREATED);

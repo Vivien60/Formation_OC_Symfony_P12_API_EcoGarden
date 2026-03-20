@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Enum\Month;
 use App\Repository\AdviceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -28,7 +29,7 @@ class Advice
     /**
      * @var Collection<int, MonthAdvice>
      */
-    #[ORM\OneToMany(targetEntity: MonthAdvice::class, mappedBy: 'advice', cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(targetEntity: MonthAdvice::class, mappedBy: 'advice', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Groups(["getAdvices"])]
     private Collection $months;
 

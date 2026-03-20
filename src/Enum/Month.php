@@ -22,4 +22,13 @@ enum Month: int
         $date = \DateTimeImmutable::createFromFormat('!m', (string) $this->value);
         return \IntlDateFormatter::formatObject($date, 'MMMM', $locale);
     }
+
+    public static function fromCurMonth(): static {
+        return self::fromDate(new \DateTimeImmutable('now'));
+    }
+
+    public static function fromDate(\DateTimeImmutable $date): static
+    {
+        return self::from((int)$date->format('m'));
+    }
 }

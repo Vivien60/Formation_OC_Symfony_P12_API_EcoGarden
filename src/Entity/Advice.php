@@ -24,7 +24,7 @@ class Advice
     /**
      * @var Collection<int, MonthAdvice>
      */
-    #[ORM\OneToMany(targetEntity: MonthAdvice::class, mappedBy: 'advice')]
+    #[ORM\OneToMany(targetEntity: MonthAdvice::class, mappedBy: 'advice', cascade: ['persist', 'remove'])]
     private Collection $months;
 
     public function __construct()
@@ -73,6 +73,7 @@ class Advice
     {
         if (!$this->months->contains($month)) {
             $this->months->add($month);
+            $month->setAdvice($this);
         }
 
         return $this;

@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Advice;
+use App\Enum\Month;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -15,6 +16,22 @@ class AdviceRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Advice::class);
     }
+
+        /**
+         * @return Advice[] Returns an array of Advice objects
+         */
+        public function findByMonth(Month $month): array
+        {
+            return $this->createQueryBuilder('a')
+                ->innerJoin('a.months', 'm')
+                ->andWhere('m.numberInYear = :val')
+                ->setParameter('val', $month->value)
+                ->orderBy('a.id', 'ASC')
+                ->setMaxResults(10)
+                ->getQuery()
+                ->getResult()
+            ;
+        }
 
     //    /**
     //     * @return Advice[] Returns an array of Advice objects

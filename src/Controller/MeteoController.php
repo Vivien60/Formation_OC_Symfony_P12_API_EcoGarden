@@ -13,7 +13,7 @@ final class MeteoController extends AbstractController
 {
     #[Route('/meteo/{city}', name: 'app_meteo_detail', requirements: ['city' => '\w+'], methods: 'GET')]
     #[Route('/meteo', name: 'app_meteo_detail_default', methods: 'GET')]
-    public function getMeteoDetail(MeteoService $meteoService, string $city = '') : JsonResponse
+    public function getMeteoDetail(MeteoService $meteoService, ?string $city = null) : JsonResponse
     {
         try {
             $meteo = $meteoService->getWeather($city);

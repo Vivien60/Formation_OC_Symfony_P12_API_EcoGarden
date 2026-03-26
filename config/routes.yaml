@@ -9,3 +9,7 @@
 
 controllers:
     resource: routing.controllers
+
+auth_check:
+  path: /auth
+  methods: POST

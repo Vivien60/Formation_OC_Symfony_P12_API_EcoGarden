@@ -2,20 +2,21 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\Advice;
 use App\Entity\MonthAdvice;
 use App\Enum\Month;
 use App\Factory\AdviceFactory;
 use App\Factory\UserFactory;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use App\Entity\User;
 
 class AppFixtures extends Fixture
 {
     private UserPasswordHasherInterface $passwordHasher;
 
-    public function __construct(UserPasswordHasherInterface $passwordHasher)
+    public function __construct(UserPasswordHasherInterface $passwordHasher, #[Autowire('%env(DEFAULT_PWD)%')] private string $defaultPassword)
     {
         $this->passwordHasher = $passwordHasher;
     }
@@ -35,11 +36,12 @@ class AppFixtures extends Fixture
                 ),
             ];
         });
-        UserFactory::createMany(10);
-        $user = UserFactory::new()->create();
-        $passwordHash = $this->passwordHasher->hashPassword($user, $this->passwordHasher->hashPassword($user, getenv('DEFAULT_PWD')));
-        $user->setPassword($passwordHash);
-        $manager->persist($user);
+        for($i=0; $i<10; $i++) {
+            UserFactory::new()->afterInstantiate(function (User $user) {
+                $hash = $this->passwordHasher->hashPassword($user, $this->defaultPassword);
+                $user->setPassword($hash);
+            })->create();
+        }
         $manager->flush();
     }
 }

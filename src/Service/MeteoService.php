@@ -11,6 +11,7 @@ use Symfony\Contracts\HttpClient\{Exception\ClientExceptionInterface,
     Exception\TransportExceptionInterface,
     HttpClientInterface,
     ResponseInterface};
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class MeteoService
@@ -19,13 +20,16 @@ class MeteoService
     public function __construct(
         private HttpClientInterface $httpClient,
         private OpenWeatherMapToMeteoMapper $meteoMapper,
+        private Security $security,
         #[Autowire('%env(OPENWEATHERMAP_API_KEY)%')] private string $apiKey
     )
     {
     }
 
-    public function getWeather(string $city = '') : Meteo
+    public function getWeather(?string $city = null) : Meteo
     {
+        $currentUser = $this->security->getUser();
+        $city ??= $currentUser->getCity();
         $response = $this->callApi($city);
         $this->assertSuccessful($response);
         return $this->buildMeteo($response->toArray());

@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -30,8 +31,10 @@ final class AdviceController extends AbstractController
     #[Route('/conseil/{monthId}', name: 'advices_list_with_month', requirements: ['monthId' => '\d{1,2}'], methods: 'GET')]
     public function list(AdviceRepository $adviceRepository, SerializerInterface $serializer, int $monthId): JsonResponse
     {
-        $month = Month::from($monthId);
-
+        $month = Month::tryFrom($monthId);
+        if($month === null) {
+            throw new HttpException(400, 'Le mois doit être compris entre 1 et 12');
+        }
         $advices = $adviceRepository->findByMonth($month);
         $advicesSerialized = $serializer->serialize($advices, 'json', ['groups' => 'getAdvices']);
         return new JsonResponse($advicesSerialized, Response::HTTP_OK, [], true);

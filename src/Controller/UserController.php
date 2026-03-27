@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\DTO\CreateUserRequest;
 use App\Entity\User;
+use App\Exception\ConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -30,6 +32,10 @@ final class UserController extends AbstractController
         $user = $serializer->deserialize($request->getContent(),
             User::class,
             'json');
+        $errors = $validator->validate($user);
+        if (count($errors) > 0) {
+            throw new ConstraintViolationException($errors);
+        }
         $password = $request->toArray()['password'];
         $user->setPassword($userPasswordHasher->hashPassword($user, $password));
         $em->persist($user);
@@ -52,18 +58,18 @@ final class UserController extends AbstractController
          User $currentUser,
          ValidatorInterface $validator,
          EntityManagerInterface $em,
-         SerializerInterface $serializer
+         SerializerInterface $serializer,
      ): JsonResponse
     {
         $updatedUser = $serializer->deserialize($request->getContent(),
             User::class,
             'json',
-            [AbstractNormalizer::OBJECT_TO_POPULATE => $currentUser]
+            [AbstractNormalizer::OBJECT_TO_POPULATE => $currentUser, 'groups' => 'user:write']
         );
-        /*$password = $request->toArray()['password'] ?? '';
-        if(!empty($password)) {
-            $updatedUser->setPassword($userPasswordHasher->hashPassword($updatedUser, $password));
-        }*/
+        $errors = $validator->validate($updatedUser);
+        if (count($errors) > 0) {
+            throw new ConstraintViolationException($errors);
+        }
         $em->persist($updatedUser);
         $em->flush();
 

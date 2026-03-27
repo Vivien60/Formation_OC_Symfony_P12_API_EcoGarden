@@ -13,6 +13,7 @@ use Symfony\Contracts\HttpClient\{Exception\ClientExceptionInterface,
     ResponseInterface};
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\Response;
 
 class MeteoService
 {
@@ -67,7 +68,7 @@ class MeteoService
             ServerExceptionInterface $exception) {
             throw new MeteoApiException($exception->getResponse()->toArray(false)['message'], $exception->getResponse()->getStatusCode());
         } catch (TransportExceptionInterface $exception) {
-            throw new MeteoApiException('Service météo indisponible', 503);
+            throw new MeteoApiException('Service météo indisponible', Response::HTTP_SERVICE_UNAVAILABLE);
         }
     }
 }

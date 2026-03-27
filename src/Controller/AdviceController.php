@@ -28,12 +28,12 @@ final class AdviceController extends AbstractController
         return new JsonResponse($advicesSerialized, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/conseil/{monthId}', name: 'advices_list_with_month', requirements: ['monthId' => '\d{1,2}'], methods: 'GET')]
+    #[Route('/conseil/{monthId}', name: 'advices_list_with_month', requirements: ['monthId' => '\d+'], methods: 'GET')]
     public function list(AdviceRepository $adviceRepository, SerializerInterface $serializer, int $monthId): JsonResponse
     {
         $month = Month::tryFrom($monthId);
         if($month === null) {
-            throw new HttpException(400, 'Le mois doit être compris entre 1 et 12');
+            throw new HttpException(Response::HTTP_BAD_REQUEST, 'Le mois doit être compris entre 1 et 12');
         }
         $advices = $adviceRepository->findByMonth($month);
         $advicesSerialized = $serializer->serialize($advices, 'json', ['groups' => 'getAdvices']);

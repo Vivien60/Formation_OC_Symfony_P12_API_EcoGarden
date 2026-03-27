@@ -6,6 +6,7 @@ use App\Exception\MeteoApiException;
 use App\Service\MeteoService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -21,6 +22,6 @@ final class MeteoController extends AbstractController
         } catch (MeteoApiException $exception) {
             return new JsonResponse(["message" => $exception->getMessage(), "code" => $exception->getCode()], $exception->getCode());
         }
-        return new JsonResponse($meteo, 200, []);
+        return new JsonResponse($meteo, Response::HTTP_OK, []);
     }
 }

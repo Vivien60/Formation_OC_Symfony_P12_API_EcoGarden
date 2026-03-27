@@ -9,6 +9,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
@@ -41,7 +42,7 @@ final class UserController extends AbstractController
         $em->persist($user);
         $em->flush();
 
-        return $this->json([], 201);
+        return $this->json([], Response::HTTP_CREATED);
     }
 
     #[Route('/user/{id}', name: 'user_delete', requirements: ['id' => '\d+'], methods: 'DELETE')]
@@ -49,7 +50,7 @@ final class UserController extends AbstractController
     {
         $em->remove($user);
 
-        return $this->json([], 204);
+        return $this->json([], Response::HTTP_NO_CONTENT);
     }
 
      #[Route('/user/{id}', name: 'user_update', requirements: ['id' => '\d+'], methods: 'PUT')]
@@ -73,13 +74,13 @@ final class UserController extends AbstractController
         $em->persist($updatedUser);
         $em->flush();
 
-        return $this->json([], 204);
+        return $this->json([], Response::HTTP_NO_CONTENT);
     }
 
     #[Route('/user/me', name: 'user_me', requirements: ['id' => '\d+'], methods: 'GET')]
     public function me(): JsonResponse
     {
-        return $this->json($this->getUser(), 200, [], ['groups' => 'user:read']);
+        return $this->json($this->getUser(), Response::HTTP_OK, [], ['groups' => 'user:read']);
     }
 
 }

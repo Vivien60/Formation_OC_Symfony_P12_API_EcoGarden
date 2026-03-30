@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: AdviceRepository::class)]
 class Advice
@@ -18,12 +19,13 @@ class Advice
     #[Groups(["getAdvices"])]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups(["getAdvices"])]
     private ?string $title = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(length: 255, nullable: false)]
     #[Groups(["getAdvices"])]
+    #[Assert\NotBlank(message: 'Le champ description est obligatoire')]
     private ?string $description = null;
 
     /**
@@ -31,6 +33,7 @@ class Advice
      */
     #[ORM\OneToMany(targetEntity: MonthAdvice::class, mappedBy: 'advice', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Groups(["getAdvices"])]
+    #[Assert\Count(min: 1, minMessage: 'Le champ months est obligatoire')]
     private Collection $months;
 
     public function __construct()

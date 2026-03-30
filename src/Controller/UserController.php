@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\DTO\CreateUserRequest;
 use App\Entity\User;
 use App\Exception\ConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -49,6 +48,7 @@ final class UserController extends AbstractController
     public function delete(User $user, EntityManagerInterface $em): JsonResponse
     {
         $em->remove($user);
+        $em->flush();
 
         return $this->json([], Response::HTTP_NO_CONTENT);
     }

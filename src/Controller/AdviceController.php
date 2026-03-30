@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Advice;
+use App\Exception\ConstraintViolationException;
 use App\Repository\AdviceRepository;
 use App\Service\AdviceMonthManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -15,6 +16,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Enum\Month;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class AdviceController extends AbstractController
 {
@@ -65,7 +67,7 @@ final class AdviceController extends AbstractController
     }
 
     #[Route('/conseil', name: 'advices_create', methods: 'POST')]
-    public function createAdvice(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AdviceMonthManager $monthManager): JsonResponse
+    public function createAdvice(Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AdviceMonthManager $monthManager, ValidatorInterface $validator): JsonResponse
     {
         /** @var Advice $newAdvice */
         $newAdvice = $serializer->deserialize(
@@ -73,6 +75,10 @@ final class AdviceController extends AbstractController
             Advice::class,
             'json'
         );
+        $errors = $validator->validate($newAdvice);
+        if (count($errors) > 0) {
+            throw new ConstraintViolationException($errors);
+        }
         $months = $request->toArray()['months'] ?? [];
         $monthManager->syncMonths($newAdvice, $months);
         $em->persist($newAdvice);

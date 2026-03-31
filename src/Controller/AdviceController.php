@@ -7,16 +7,17 @@ use App\Exception\ConstraintViolationException;
 use App\Repository\AdviceRepository;
 use App\Service\AdviceMonthManager;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
-use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\{Bundle\FrameworkBundle\Controller\AbstractController,
+    Component\HttpFoundation\JsonResponse,
+    Component\HttpFoundation\Request,
+    Component\HttpFoundation\Response,
+    Component\Routing\Attribute\Route,
+    Component\Serializer\Normalizer\AbstractNormalizer,
+    Component\Serializer\SerializerInterface,
+    Component\Validator\ConstraintViolation,
+    Component\Validator\ConstraintViolationList,
+    Component\Validator\Validator\ValidatorInterface};
 use App\Enum\Month;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class AdviceController extends AbstractController
 {
@@ -25,7 +26,7 @@ final class AdviceController extends AbstractController
     {
         $month = Month::fromCurMonth();
 
-        $advices = $adviceRepository->findByMonth($month);
+        $advices = $adviceRepository->findByMonthWithPagination($month, 1, $this->getParameter('pagination_limit'));
         $advicesSerialized = $serializer->serialize($advices, 'json', ['groups' => 'getAdvices']);
         return new JsonResponse($advicesSerialized, Response::HTTP_OK, [], true);
     }
@@ -35,9 +36,15 @@ final class AdviceController extends AbstractController
     {
         $month = Month::tryFrom($monthId);
         if($month === null) {
-            throw new HttpException(Response::HTTP_BAD_REQUEST, 'Le mois doit être compris entre 1 et 12');
+            $violations = new ConstraintViolationList([
+                new ConstraintViolation(
+                    'Le mois doit être compris entre 1 et 12',
+                    null, [], null, 'month', $monthId
+                )
+            ]);
+            throw new ConstraintViolationException($violations);
         }
-        $advices = $adviceRepository->findByMonth($month);
+        $advices = $adviceRepository->findByMonthWithPagination($month, 1, $this->getParameter('pagination_limit'));
         $advicesSerialized = $serializer->serialize($advices, 'json', ['groups' => 'getAdvices']);
         return new JsonResponse($advicesSerialized, Response::HTTP_OK, [], true);
     }

@@ -3,14 +3,12 @@
 namespace App\EventSubscriber;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\{DependencyInjection\Attribute\Autowire,
+    EventDispatcher\EventSubscriberInterface,
+    HttpFoundation\JsonResponse,
+    HttpKernel\Event\ExceptionEvent,
+    HttpKernel\Exception\HttpException};
 use App\Exception\ConstraintViolationException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\Routing\Matcher\UrlMatcherInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 
 class ExceptionSubscriber implements EventSubscriberInterface
 {
@@ -55,7 +53,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
             $this->exception instanceof ConstraintViolationException => $this->buildConstraintViolationMsg(),
             $this->exception instanceof HttpException => $this->buildDebugMsg(),
             //les autres sont des méthodes non détaillées pour un debug
-            default => $this->handleRedactedMsg(),
+            default => $this->buildDebugMsg(),
         };
         return $message;
     }
@@ -92,10 +90,7 @@ class ExceptionSubscriber implements EventSubscriberInterface
 
     protected function buildRouteNotFoundMsg(): array
     {
-        return [
-            'status' => 400,
-            'message' => 'La route n\'existe pas'
-        ];
+        return $this->buildResponse(status:404, message:'La route n\'existe pas');
     }
 
     private function buildRedactedMsg(): array
@@ -106,13 +101,24 @@ class ExceptionSubscriber implements EventSubscriberInterface
             401 => 'Non autorisé',
             403 => 'Accès refusé',
             404 => 'Ressource non trouvée',
-            default => 'Erreur serveur',
+            default => 'Erreur',
+        };
+        $erreurs = match ($status) {
+            400 => $this->exception->getMessage(),
+            default => [],
         };
 
-        return [
-            'status' => $status,
-            'message' => $message,
-        ];
+        return $this->buildResponse(status:$status, message:$message, erreurs:$erreurs);
+    }
+
+    private function buildDefaultMessage() : array
+    {
+        return $this->buildResponse(status:$this->getStatus(), message:'Erreur');
+    }
+
+    protected function buildDebugMsg(): array
+    {
+        return $this->buildResponse(status:$this->getStatus(), message:$this->exception->getMessage());
     }
 
     private function getStatus(): int
@@ -122,23 +128,13 @@ class ExceptionSubscriber implements EventSubscriberInterface
             : 500;
     }
 
-    private function buildDefaultMessage() : array
+    protected function buildResponse(int $status, string $message, ?array $erreurs = null): array
     {
+        $erreurs = $erreurs ?? new \stdClass();
         return [
-            'status' => $this->getStatus(),
-            'message' => $this->exception->getMessage()
-        ];
-    }
-
-    /**
-     * @param $exception
-     * @return array
-     */
-    protected function buildDebugMsg(): array
-    {
-        return [
-            'status' => $this->getStatus(),
-            'message' => $this->exception->getMessage()
+            'status' => $status,
+            'message' => $message,
+            'errors' => $erreurs,
         ];
     }
 }

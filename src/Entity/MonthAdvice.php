@@ -13,7 +13,6 @@ class MonthAdvice
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getAdvices"])]
     private ?int $id = null;
     #[ORM\Column(type: 'integer')]
     #[Groups(["getAdvices"])]

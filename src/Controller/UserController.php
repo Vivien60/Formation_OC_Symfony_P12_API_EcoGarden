@@ -17,15 +17,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class UserController extends AbstractController
 {
-    #[Route('/user', name: 'user', methods: 'GET')]
-    public function index(): JsonResponse
-    {
-        return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/UserController.php',
-        ]);
-    }
-
     #[Route('/user', name: 'user_create', methods: 'POST')]
     public function create(Request $request, ValidatorInterface $validator, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse
     {

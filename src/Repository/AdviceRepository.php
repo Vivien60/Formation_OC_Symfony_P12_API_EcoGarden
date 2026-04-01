@@ -5,6 +5,8 @@ namespace App\Repository;
 use App\Entity\Advice;
 use App\Enum\Month;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -17,19 +19,26 @@ class AdviceRepository extends ServiceEntityRepository
         parent::__construct($registry, Advice::class);
     }
 
+    public function findByMonthWithPagination(Month $month, int $page, int $limit): Paginator
+    {
+        $query = $this->getQueryBuilderToFindByMonth($month)
+            ->getQuery()
+            ->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit);
+
+        return new \Doctrine\ORM\Tools\Pagination\Paginator($query);
+    }
+
         /**
          * @return Advice[] Returns an array of Advice objects
          */
-        public function findByMonth(Month $month): array
+        protected function getQueryBuilderToFindByMonth(Month $month): QueryBuilder
         {
             return $this->createQueryBuilder('a')
                 ->innerJoin('a.months', 'm')
                 ->andWhere('m.numberInYear = :val')
                 ->setParameter('val', $month->value)
                 ->orderBy('a.id', 'ASC')
-                ->setMaxResults(20)
-                ->getQuery()
-                ->getResult()
             ;
         }
 

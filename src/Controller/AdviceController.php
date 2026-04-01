@@ -6,11 +6,13 @@ use App\Entity\Advice;
 use App\Exception\ConstraintViolationException;
 use App\Repository\AdviceRepository;
 use App\Service\AdviceMonthManager;
+use App\Service\PaginatedResponseFormatter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\{Bundle\FrameworkBundle\Controller\AbstractController,
     Component\HttpFoundation\JsonResponse,
     Component\HttpFoundation\Request,
     Component\HttpFoundation\Response,
+    Component\HttpKernel\Exception\HttpException,
     Component\Routing\Attribute\Route,
     Component\Serializer\Normalizer\AbstractNormalizer,
     Component\Serializer\SerializerInterface,
@@ -21,20 +23,33 @@ use App\Enum\Month;
 
 final class AdviceController extends AbstractController
 {
+
+    public function __construct(private PaginatedResponseFormatter $paginatedResponseFormatter  )
+    {
+    }
+
     #[Route('/conseil', name: 'advices_list', methods: 'GET')]
-    public function index(AdviceRepository $adviceRepository, SerializerInterface $serializer): JsonResponse
+    public function index(Request $request, AdviceRepository $adviceRepository): JsonResponse
     {
         $month = Month::fromCurMonth();
+        $page = $request->query->getInt('page', 1);
+        if($page < 1) {
+            throw new HttpException(Response::HTTP_BAD_REQUEST, 'Le paramètre "page" doit être supérieur à 0');
+        }
+        $limit = $this->getParameter('pagination_limit');
 
-        $advices = $adviceRepository->findByMonthWithPagination($month, 1, $this->getParameter('pagination_limit'));
-        $advicesSerialized = $serializer->serialize($advices, 'json', ['groups' => 'getAdvices']);
+        $advices = $adviceRepository->findByMonthWithPagination($month, $page, $limit);
+        $advicesSerialized = $this->paginatedResponseFormatter->format(paginatedItems: $advices, limit: $limit, page: $page, groups: ['getAdvices']);
         return new JsonResponse($advicesSerialized, Response::HTTP_OK, [], true);
     }
 
     #[Route('/conseil/{monthId}', name: 'advices_list_with_month', requirements: ['monthId' => '\d+'], methods: 'GET')]
-    public function list(AdviceRepository $adviceRepository, SerializerInterface $serializer, int $monthId): JsonResponse
+    public function list(Request $request, AdviceRepository $adviceRepository, int $monthId): JsonResponse
     {
+        $page = $request->query->getInt('page', 1);
+        $limit = $this->getParameter('pagination_limit');
         $month = Month::tryFrom($monthId);
+
         if($month === null) {
             $violations = new ConstraintViolationList([
                 new ConstraintViolation(
@@ -45,7 +60,7 @@ final class AdviceController extends AbstractController
             throw new ConstraintViolationException($violations);
         }
         $advices = $adviceRepository->findByMonthWithPagination($month, 1, $this->getParameter('pagination_limit'));
-        $advicesSerialized = $serializer->serialize($advices, 'json', ['groups' => 'getAdvices']);
+        $advicesSerialized = $this->paginatedResponseFormatter->format(paginatedItems:$advices, limit:$limit, page:$page, groups:['getAdvices']);
         return new JsonResponse($advicesSerialized, Response::HTTP_OK, [], true);
     }
 

@@ -22,12 +22,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 180)]
     #[Groups(['user:read', 'user:write'])]
-    #[Assert\NotBlank(message: 'Please enter an email')]
-    #[Assert\Email(message: 'The email "{{ value }}" is not a valid email')]
+    #[Assert\NotBlank(message: 'Le champ email est obligatoire')]
+    #[Assert\Email(message: 'L\'adresse email "{{ value }}") n\' est pas une adresse email valide.')]
     private ?string $email = null;
 
-    #[ORM\Column(length: 256)]
+    #[ORM\Column(length: 256, nullable: false)]
     #[Groups(['user:read', 'user:write'])]
+    #[Assert\NotBlank(message: 'Le champ city est obligatoire')]
     private ?string $city = null;
 
     /**
@@ -41,8 +42,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @var string The hashed password
      */
     #[ORM\Column]
-    #[Assert\NotBlank(message: 'Please enter a password')]
-    #[Assert\Length(min: 8, max: 255, minMessage: 'Your password must be at least {{ limit }} characters long and at most {{ max }} characters long')]
+    #[Assert\NotBlank(message: 'Le mot de passe est obligatoire')]
+    #[Assert\Length(min: 8, max: 255, minMessage: 'Votre mot de passe doit contenir entre {{ limit }} et {{ max }} caractères', maxMessage: 'Votre mot de passe doit contenir entre {{ limit }} et {{ max }} caractères')]
     private ?string $password = null;
 
     public function getId(): ?int

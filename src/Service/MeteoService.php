@@ -14,6 +14,8 @@ use Symfony\Contracts\HttpClient\{Exception\ClientExceptionInterface,
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 class MeteoService
 {
@@ -22,6 +24,7 @@ class MeteoService
         private HttpClientInterface $httpClient,
         private OpenWeatherMapToMeteoMapper $meteoMapper,
         private Security $security,
+        private TagAwareCacheInterface $cachePool,
         #[Autowire('%env(OPENWEATHERMAP_API_KEY)%')] private string $apiKey
     )
     {
@@ -29,17 +32,45 @@ class MeteoService
 
     public function getWeather(?string $city = null) : Meteo
     {
+        if (null === $city) {
+            $city = $this->getCity();
+        }
+
+        return $this->meteoFromCache(cacheId:'meteo_'.$city, city: $city);
+    }
+
+    protected function getCity()
+    {
         $currentUser = $this->security->getUser();
-        $city ??= $currentUser->getCity();
+        $city = $currentUser->getCity();
+        return $city;
+    }
+
+    protected function meteoFromCache(string $cacheId, ?string $city): mixed
+    {
+        $meteo = $this->cachePool->get($cacheId,
+            function (ItemInterface $item) use ($city) {
+                $item->expiresAfter($this->cacheExpirationDelay());
+                return $this->meteoFromApi($city);
+            }
+        );
+        return $meteo;
+    }
+
+    private function cacheExpirationDelay()
+    {
+        $dateNow = new \DateTimeImmutable();
+        $tomorrow = $dateNow->modify('+1 day')->setTime(0, 0, 0);
+        $diff = $tomorrow->getTimestamp() - $dateNow->getTimestamp();
+        return $diff;
+    }
+
+    protected function meteoFromApi(string $city): Meteo
+    {
         $response = $this->callApi($city);
         $this->assertSuccessful($response);
         return $this->buildMeteo($response->toArray());
     }
-
-    /**
-     * @return void
-     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
-     */
 
     private function callApi(string $city): ResponseInterface
     {
@@ -53,22 +84,23 @@ class MeteoService
         );
     }
 
-    private function buildMeteo(array $weather) : Meteo
-    {
-        return $this->meteoMapper->map($weather);
-    }
-
     private function assertSuccessful(?ResponseInterface $response) : void
     {
         try {
             $response->getContent();
         } catch (
-            ClientExceptionInterface|
-            RedirectionExceptionInterface|
-            ServerExceptionInterface $exception) {
+        ClientExceptionInterface|
+        RedirectionExceptionInterface|
+        ServerExceptionInterface $exception) {
             throw new MeteoApiException($exception->getResponse()->toArray(false)['message'], $exception->getResponse()->getStatusCode());
         } catch (TransportExceptionInterface $exception) {
             throw new MeteoApiException('Service météo indisponible', Response::HTTP_SERVICE_UNAVAILABLE);
         }
     }
+
+    private function buildMeteo(array $weather) : Meteo
+    {
+        return $this->meteoMapper->map($weather);
+    }
+
 }

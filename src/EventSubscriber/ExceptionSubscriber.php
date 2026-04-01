@@ -103,12 +103,8 @@ class ExceptionSubscriber implements EventSubscriberInterface
             404 => 'Ressource non trouvée',
             default => 'Erreur',
         };
-        $erreurs = match ($status) {
-            400 => $this->exception->getMessage(),
-            default => [],
-        };
 
-        return $this->buildResponse(status:$status, message:$message, erreurs:$erreurs);
+        return $this->buildResponse(status:$status, message:$message, erreurs:[]);
     }
 
     private function buildDefaultMessage() : array

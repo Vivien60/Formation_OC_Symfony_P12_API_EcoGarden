@@ -36,7 +36,7 @@ final class UserFactory extends PersistentObjectFactory
         return [
             'email' => self::faker()->email(),
             'password' => self::faker()->password(8),
-            'city' => self::faker()->city(),
+            'city' => self::faker()->randomElement(['Paris', 'Lyon', 'Marseille', 'Nantes', 'Toulouse', 'Strasbourg', 'Bordeaux', 'Nice', 'Rennes']),
             'roles' => self::faker()->boolean(20) ? ['ROLE_ADMIN'] : [],
         ];
     }

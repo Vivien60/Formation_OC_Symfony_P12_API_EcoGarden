@@ -65,7 +65,7 @@ final class AdviceController extends AbstractController
     }
 
     #[Route('/conseil/{id}', name: 'advices_update', requirements: ['id' => '\d+'], methods: 'PUT')]
-    public function updateAdvice(Advice $currentAdvice, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AdviceMonthManager $monthManager): JsonResponse
+    public function updateAdvice(Advice $currentAdvice, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AdviceMonthManager $monthManager, ValidatorInterface $validator): JsonResponse
     {
         $updatedAdvice = $serializer->deserialize(
             $request->getContent(),
@@ -75,6 +75,10 @@ final class AdviceController extends AbstractController
         );
         $months = $request->toArray()['months'] ?? [];
         $monthManager->syncMonths($updatedAdvice, $months, true);
+        $errors = $validator->validate($updatedAdvice);
+        if (count($errors) > 0) {
+            throw new ConstraintViolationException($errors);
+        }
         $em->persist($updatedAdvice);
         $em->flush();
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);

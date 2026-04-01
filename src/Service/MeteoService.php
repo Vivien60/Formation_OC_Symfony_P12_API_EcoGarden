@@ -36,7 +36,7 @@ class MeteoService
             $city = $this->getCity();
         }
 
-        return $this->meteoFromCache(cacheId:'meteo_'.$city, city: $city);
+        return $this->meteoFromCache(cacheId:'meteo_FR_'.$city, city: $city);
     }
 
     protected function getCity()
@@ -76,7 +76,7 @@ class MeteoService
     {
         $baseUri = 'https://api.openweathermap.org';
         $endpoint = '/data/2.5/weather?units=metrics&q=%s&appid=%s';
-        $urlApi = $baseUri . sprintf($endpoint, $city, $this->apiKey);
+        $urlApi = $baseUri . sprintf($endpoint, $city.",FR", $this->apiKey);
         //https://api.openweathermap.org/data/2.5/weather?q={city name},{country code}&appid={API key}
         return $this->httpClient->request(
             'GET',

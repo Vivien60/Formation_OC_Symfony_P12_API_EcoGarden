@@ -59,12 +59,12 @@ final class AdviceController extends AbstractController
             ]);
             throw new ConstraintViolationException($violations);
         }
-        $advices = $adviceRepository->findByMonthWithPagination($month, 1, $this->getParameter('pagination_limit'));
+        $advices = $adviceRepository->findByMonthWithPagination($month, $page, $this->getParameter('pagination_limit'));
         $advicesSerialized = $this->paginatedResponseFormatter->format(paginatedItems:$advices, limit:$limit, page:$page, groups:['getAdvices']);
         return new JsonResponse($advicesSerialized, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/conseil/{id}', name: 'advices_update', methods: 'PUT')]
+    #[Route('/conseil/{id}', name: 'advices_update', requirements: ['id' => '\d+'], methods: 'PUT')]
     public function updateAdvice(Advice $currentAdvice, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, AdviceMonthManager $monthManager): JsonResponse
     {
         $updatedAdvice = $serializer->deserialize(
@@ -80,7 +80,7 @@ final class AdviceController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route('/conseil/{id}', name: 'advices_delete', methods: 'DELETE')]
+    #[Route('/conseil/{id}', name: 'advices_delete', requirements: ['id' => '\d+'], methods: 'DELETE')]
     public function deleteAdvice(Advice $advice, EntityManagerInterface $em): JsonResponse
     {
         $em->remove($advice);

@@ -37,7 +37,7 @@ final class UserFactory extends PersistentObjectFactory
             'email' => self::faker()->email(),
             'password' => self::faker()->password(8),
             'city' => self::faker()->city(),
-            'roles' => [],
+            'roles' => self::faker()->boolean(20) ? ['ROLE_ADMIN'] : [],
         ];
     }
 

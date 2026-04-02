@@ -25,14 +25,17 @@ créez votre fichier environnement (.env*)
 ### 2. Configuration de la base de données
 
 #### 2.1 Créer la base de données
-- spécifiez le connecteur à votre base de données dans votre .env
+- spécifiez le connecteur à votre base de données dans votre .env, ainsi que les variables indiquées dans le .env
 -  Puis :
     ```bash
     php bin/console doctrine:database:create
     php bin/console doctrine:migrations:migrate
     ```
 - créez une clé API OpenWeatherMap si vous n'en avez pas, puis spécifiez là (OPENWEATHERMAP_API_KEY) dans votre .env
-- mettre en place une config JWT : le bundle utilisé est lexik/jwt-authentication-bundle
+- mettre en place une config JWT : le bundle utilisé est lexik/jwt-authentication-bundle : 
+  ```bash
+  php bin/console lexik:jwt:generate-keypair
+  ```
 
 #### 2.2 Générez des données
 Des fixtures ont été créées pour générer des données aléatoires
